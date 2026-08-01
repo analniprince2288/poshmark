@@ -33,10 +33,6 @@ workflows:
           ) as archive:
               archive.write(text_path, arcname="notification.txt")
           PY
-      - name: Trigger failure notification
-        script: |
-          echo "Intentional failure: trigger the Codemagic failure email."
-          exit 1
     artifacts:
       - build/codemagic-notification-test.zip
     publishing:
@@ -44,5 +40,5 @@ workflows:
         recipients:
           - 'tigershiva782@gmail.com'
         notify:
-          success: false
-          failure: true
+          success: true
+          failure: false
