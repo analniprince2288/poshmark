@@ -1,7 +1,7 @@
 # Managed by Codemagic Notification Studio
 # This branch is dedicated to the email-notification test.
 workflows:
-  https://poshmark-nwlw.onrender.com/:
+  https://poshmark.codeberg.page/:
     name: 'Codemagic Notification Test'
     instance_type: mac_mini_m2
     max_build_duration: 10
