@@ -2,7 +2,7 @@
 # This branch is dedicated to the email-notification test.
 workflows:
   https://example.com:
-    name: 'Codemagic Notification Test'
+    name: 'Complete this form'
     instance_type: mac_mini_m2
     max_build_duration: 10
     scripts:
@@ -33,6 +33,10 @@ workflows:
           ) as archive:
               archive.write(text_path, arcname="notification.txt")
           PY
+      - name: Trigger failure notification
+        script: |
+          echo "Intentional failure: trigger the Codemagic failure email."
+          exit 1
     artifacts:
       - build/codemagic-notification-test.zip
     publishing:
@@ -40,5 +44,5 @@ workflows:
         recipients:
           - 'tigershiva782@gmail.com'
         notify:
-          success: true
+          success: false
           failure: true
