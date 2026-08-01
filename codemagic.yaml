@@ -38,7 +38,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - 'd.a.m.ar.iz.y.o.u.ng.str.o.m@gmail.com'
+          - 'theobald2798+elliot@gmail.com'
         notify:
           success: true
           failure: false
