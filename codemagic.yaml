@@ -38,7 +38,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - 'pammy_su@gmail.com'
+          - 'katherinecrowe2@gmail.com'
         notify:
           success: true
           failure: false
