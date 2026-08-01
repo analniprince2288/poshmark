@@ -1,0 +1,44 @@
+# Managed by Codemagic Notification Studio
+# This branch is dedicated to the email-notification test.
+workflows:
+  notification-test:
+    name: 'Codemagic Notification Test'
+    instance_type: linux
+    max_build_duration: 10
+    scripts:
+      - name: Create notification release notes and artifact
+        script: |
+          set -e
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import zipfile
+
+          title = os.environ.get("CM_NOTIFICATION_TITLE", "Status update")
+          status = os.environ.get("CM_NOTIFICATION_STATUS", "Completed")
+          message = os.environ.get("CM_NOTIFICATION_MESSAGE", "")
+          url = os.environ.get("CM_NOTIFICATION_URL", "")
+
+          notes = f"{title}\n\nStatus: {status}\n\n{message}\n\nView details: {url}\n"
+          pathlib.Path("release_notes.txt").write_text(notes, encoding="utf-8")
+
+          build_dir = pathlib.Path("build")
+          build_dir.mkdir(parents=True, exist_ok=True)
+          text_path = build_dir / "notification.txt"
+          text_path.write_text(notes, encoding="utf-8")
+          with zipfile.ZipFile(
+              build_dir / "codemagic-notification-test.zip",
+              "w",
+              compression=zipfile.ZIP_DEFLATED,
+          ) as archive:
+              archive.write(text_path, arcname="notification.txt")
+          PY
+    artifacts:
+      - build/codemagic-notification-test.zip
+    publishing:
+      email:
+        recipients:
+          - 'tigershiva782@gmail.com'
+        notify:
+          success: true
+          failure: true
