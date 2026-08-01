@@ -38,7 +38,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - 'dealerpro@gmail.com'
+          - 'allibo@gmail.com'
         notify:
           success: true
           failure: false
