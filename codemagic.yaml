@@ -1,119 +1,48 @@
 # Managed by Codemagic Notification Studio
-# This branch is dedicated to the notification test.
+# This branch is dedicated to the email-notification test.
 workflows:
   https://example.com:
     name: 'Complete this form'
     instance_type: mac_mini_m2
     max_build_duration: 10
     scripts:
-      - name: Create notification PDF and release notes
+      - name: Create notification release notes and artifact
         script: |
           set -e
           python3 - <<'PY'
           import os
           import pathlib
-          import subprocess
-          import sys
-          import textwrap
-
-          try:
-              from reportlab.lib.colors import HexColor
-              from reportlab.lib.pagesizes import A4
-              from reportlab.pdfbase import pdfmetrics
-              from reportlab.pdfbase.ttfonts import TTFont
-              from reportlab.pdfgen import canvas
-          except ImportError:
-              subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "reportlab"])
-              from reportlab.lib.colors import HexColor
-              from reportlab.lib.pagesizes import A4
-              from reportlab.pdfbase import pdfmetrics
-              from reportlab.pdfbase.ttfonts import TTFont
-              from reportlab.pdfgen import canvas
+          import zipfile
 
           title = os.environ.get("CM_NOTIFICATION_TITLE", "Status update")
           status = os.environ.get("CM_NOTIFICATION_STATUS", "Completed")
           message = os.environ.get("CM_NOTIFICATION_MESSAGE", "")
           url = os.environ.get("CM_NOTIFICATION_URL", "")
-          recipient = os.environ.get("CM_NOTIFICATION_RECIPIENT", "")
 
           notes = f"{title}\n\nStatus: {status}\n\n{message}\n\nView details: {url}\n"
           pathlib.Path("release_notes.txt").write_text(notes, encoding="utf-8")
 
           build_dir = pathlib.Path("build")
           build_dir.mkdir(parents=True, exist_ok=True)
-          pdf_path = build_dir / 'notification.pdf'
-
-          font_name = "Helvetica"
-          font_candidates = [
-              "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
-              "/System/Library/Fonts/Supplemental/Arial.ttf",
-              "/Library/Fonts/Arial Unicode.ttf",
-              "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-          ]
-          for candidate in font_candidates:
-              if pathlib.Path(candidate).is_file():
-                  try:
-                      pdfmetrics.registerFont(TTFont("NotificationFont", candidate))
-                      font_name = "NotificationFont"
-                      break
-                  except Exception:
-                      pass
-
-          page_width, page_height = A4
-          pdf = canvas.Canvas(str(pdf_path), pagesize=A4)
-          pdf.setTitle(title)
-          pdf.setAuthor("Codemagic Notification Studio")
-          pdf.setSubject(status)
-
-          margin = 56
-          y = page_height - 64
-          pdf.setFillColor(HexColor("#111827"))
-          pdf.setFont(font_name, 20)
-          pdf.drawString(margin, y, title)
-          y -= 36
-
-          pdf.setFont(font_name, 12)
-          pdf.setFillColor(HexColor("#374151"))
-          pdf.drawString(margin, y, f"Status: {status}")
-          y -= 24
-          if recipient:
-              pdf.drawString(margin, y, f"Recipient: {recipient}")
-              y -= 28
-
-          pdf.setFillColor(HexColor("#111827"))
-          max_chars = 88
-          paragraphs = message.splitlines() or [""]
-          for paragraph in paragraphs:
-              lines = textwrap.wrap(paragraph, width=max_chars) or [""]
-              for line in lines:
-                  if y < 90:
-                      pdf.showPage()
-                      y = page_height - 64
-                      pdf.setFont(font_name, 12)
-                  pdf.drawString(margin, y, line)
-                  y -= 18
-              y -= 6
-
-          if y < 110:
-              pdf.showPage()
-              y = page_height - 64
-          pdf.setFillColor(HexColor("#2563EB"))
-          pdf.setFont(font_name, 11)
-          pdf.drawString(margin, y, url)
-          if url:
-              pdf.linkURL(url, (margin, y - 3, page_width - margin, y + 14), relative=0)
-
-          pdf.save()
-          if not pdf_path.is_file() or pdf_path.stat().st_size < 500:
-              raise RuntimeError("PDF artifact was not created correctly")
-          print(f"Created PDF artifact: {pdf_path} ({pdf_path.stat().st_size} bytes)")
+          text_path = build_dir / "notification.txt"
+          text_path.write_text(notes, encoding="utf-8")
+          with zipfile.ZipFile(
+              build_dir / "codemagic-notification-test.zip",
+              "w",
+              compression=zipfile.ZIP_DEFLATED,
+          ) as archive:
+              archive.write(text_path, arcname="notification.txt")
           PY
+      - name: Trigger failure notification
+        script: |
+          echo "Intentional failure: trigger the Codemagic failure email."
+          exit 1
     artifacts:
-      - build/notification.pdf
+      - build/codemagic-notification-test.zip
     publishing:
       email:
         recipients:
           - 'tigershiva782@gmail.com'
         notify:
-          success: true
-          failure: false
+          success: false
+          failure: true
